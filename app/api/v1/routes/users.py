@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from fastapi import (
 	APIRouter,
 	Depends,
@@ -5,10 +7,12 @@ from fastapi import (
 	status
 )
 from sqlalchemy.exc import IntegrityError
-from models.user import User
-from schemas.user import UserRegister, UserResponse
+from schemas.user import Token
+from schemas.user import UserLogin, UserRegister, UserResponse
 from dependencies.db import SessionDep
-from utils.user import hash_password
+from core.security import create_access_token, hash_password
+from services.user_services import authenticate
+from core.config import ACCESS_TOKEN_EXPIRE_MINUTES
 
 router = APIRouter()
 
@@ -46,6 +50,26 @@ async def register_user(
 	except IntegrityError:
 		session.rollback()
 		raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Something went wrong")
+	
+
+@router.post("/login", tags=["auth"])
+async def login(
+	user: UserLogin,
+	session: SessionDep,
+) -> Token:
+	user = authenticate(session=session, email=user.email, password=user.password)
+
+	if not user:
+		raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrent email or password")
+	access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+
+	return Token(
+        access_token=create_access_token(
+            user.id, expires_delta=access_token_expires
+        )
+    )
+
+	
 
 
 	

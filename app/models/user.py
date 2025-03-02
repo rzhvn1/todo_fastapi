@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sqlalchemy import Boolean, Integer, String, Text, select
+from sqlalchemy import Integer, String, select
 from sqlalchemy.orm import Mapped, mapped_column, relationship, Session
 
 from db.database import Base
