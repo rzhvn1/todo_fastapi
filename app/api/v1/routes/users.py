@@ -7,6 +7,7 @@ from fastapi import (
 	status
 )
 from sqlalchemy.exc import IntegrityError
+from models.user import User
 from schemas.user import Token
 from schemas.user import UserLogin, UserRegister, UserResponse
 from dependencies.db import SessionDep
