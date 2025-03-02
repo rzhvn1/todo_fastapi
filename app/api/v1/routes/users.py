@@ -17,17 +17,18 @@ async def register_user(
 	user: UserRegister,
 	session: SessionDep,
 ):	
-	if User.get_by_email(session=session, email=user.email):
-		return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User with this email already exists")
-	
-	if User.get_by_username(session=session, username=user.username):
-		return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User with this username already exists")
+	existing_user = session.query(User).filter(
+        (User.email == user.email) | (User.username == user.username)
+    ).first()
+
+	if existing_user:
+		raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User with this email or username already exists")
 	
 	if not user.password:
-		return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Password is required")
+		raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Password is required")
 	
 	if user.password != user.confirm_password:
-		return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Passwords does not match")
+		raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Passwords does not match")
 	
 	hashed_password = hash_password(user.password)
 	try:
@@ -44,7 +45,7 @@ async def register_user(
 		return new_user
 	except IntegrityError:
 		session.rollback()
-		return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Something went wrong")
+		raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Something went wrong")
 
 
 	
