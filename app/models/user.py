@@ -1,4 +1,5 @@
 from __future__ import annotations
+from asyncio import Task
 
 from sqlalchemy import Integer, String, select
 from sqlalchemy.orm import Mapped, mapped_column, relationship, Session
@@ -14,6 +15,8 @@ class User(Base):
 	first_name: Mapped[str | None] = mapped_column(String, nullable=True, default=None)
 	last_name: Mapped[str | None] = mapped_column(String, nullable=True, default=None)
 	password: Mapped[str] = mapped_column(String(255), nullable=True, default=None)
+
+	tasks: Mapped[list[Task]] = relationship("Task", back_populates="owner", cascade="all, delete-orphan")
 
 	def __repr__(self):
 		return f"User(id={self.id!r}, username={self.username!r}, email={self.email!r})"

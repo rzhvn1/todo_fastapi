@@ -4,6 +4,11 @@ from fastapi import FastAPI
 from sqlmodel import create_engine
 from contextlib import asynccontextmanager
 from sqlalchemy.orm import DeclarativeBase
+from dotenv import load_dotenv
+
+load_dotenv()  # Load environment variables
+
+print(os.getenv("DATABASE_URL"))
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///db.sqlite")
 if DATABASE_URL == "":
