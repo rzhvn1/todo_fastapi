@@ -1,4 +1,5 @@
 from datetime import timedelta
+from typing import Annotated
 
 from fastapi import (
 	APIRouter,
@@ -6,6 +7,7 @@ from fastapi import (
 	HTTPException,
 	status
 )
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.exc import IntegrityError
 from models.user import User
 from schemas.user import Token
@@ -55,10 +57,11 @@ async def register_user(
 
 @router.post("/login", tags=["auth"])
 async def login(
-	user: UserLogin,
 	session: SessionDep,
+	form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
 ) -> Token:
-	user = authenticate(session=session, email=user.email, password=user.password)
+	user = authenticate(session=session, email=form_data.username, password=form_data.password)
+
 
 	if not user:
 		raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrent email or password")
