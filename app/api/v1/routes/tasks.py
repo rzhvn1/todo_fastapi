@@ -1,8 +1,8 @@
 from typing import Any
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, status
 from schemas.task import TaskPublic, TaskCreate, TasksPublic
 from dependencies.db import SessionDep
-from dependencies.user import CurrentUser, TokenDep
+from dependencies.user import CurrentUser
 from models.task import Task
 from models.user import User
 from sqlalchemy import select, func
@@ -21,7 +21,7 @@ async def get_tasks(
     if owner_id:
         owner = session.get(User, owner_id)
         if not owner:
-            raise HTTPException(status_code=404, detail="User not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
         count_statement = (
             select(func.count())
             .select_from(Task)
@@ -51,7 +51,16 @@ async def get_tasks(
 
     return TasksPublic(data=items, count=count)
 
-    
+@router.get("/{id}", tags=["tasks"], response_model=TaskPublic)
+async def get_task(
+    session: SessionDep,
+    current_user: CurrentUser,
+    id: int
+) -> Any:
+    task = session.get(Task, id)
+    if not task:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
+    return task
 
 @router.post("/", tags=["tasks"], response_model=TaskPublic)
 async def create_task(
@@ -62,7 +71,7 @@ async def create_task(
     if task_in.owner_id:
         owner = session.get(User, task_in.owner_id)
         if not owner:
-            raise HTTPException(status_code=404, detail="User not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     task = Task(
         title=task_in.title,
         description=task_in.description,

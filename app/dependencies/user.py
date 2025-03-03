@@ -6,12 +6,12 @@ from models.user import User
 from fastapi.security import OAuth2PasswordBearer
 from dependencies.db import SessionDep
 from models.user import User
-from core.config import SECRET_KEY
+from core.config import settings
 from core.security import ALGORITHM
 from schemas.user import TokenPayload
 from jwt.exceptions import InvalidTokenError
 from pydantic import ValidationError
-
+import logging
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"/api/v1/users/login"
 )
@@ -22,10 +22,11 @@ TokenDep = Annotated[str, Depends(reusable_oauth2)]
 def get_current_user(session: SessionDep, token: TokenDep) -> User:
     try:
         payload = jwt.decode(
-            token, SECRET_KEY, algorithms=[ALGORITHM]
+            token, settings.SECRET_KEY, algorithms=[ALGORITHM]
         )
         token_data = TokenPayload(**payload)
-    except (InvalidTokenError, ValidationError):
+    except (InvalidTokenError, ValidationError) as e:
+        logging.error(f"Error decoding token: {e}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Could not validate credentials",
