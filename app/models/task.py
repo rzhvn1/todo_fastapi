@@ -18,7 +18,7 @@ class Task(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime, onupdate=func.now(), nullable=True)
 
-    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=True)
     owner: Mapped[User] = relationship("User", back_populates="tasks")
 
     def __repr__(self): 

@@ -1,27 +1,73 @@
+from typing import Any
 from fastapi import APIRouter, HTTPException
-from schemas.task import TaskResponse, TaskCreate
+from schemas.task import TaskPublic, TaskCreate, TasksPublic
 from dependencies.db import SessionDep
 from dependencies.user import CurrentUser, TokenDep
 from models.task import Task
 from models.user import User
+from sqlalchemy import select, func
 
 
 router = APIRouter()
 
-@router.post("/", tags=["tasks"], response_model=TaskResponse)
+@router.get("/", tags=["tasks"], response_model=TasksPublic)
+async def get_tasks(
+    session: SessionDep,
+    current_user: CurrentUser,
+    skip: int = 0, 
+    limit: int = 100,
+    owner_id: int | None = None,
+) -> Any:
+    if owner_id:
+        owner = session.get(User, owner_id)
+        if not owner:
+            raise HTTPException(status_code=404, detail="User not found")
+        count_statement = (
+            select(func.count())
+            .select_from(Task)
+            .where(Task.owner_id == owner.id)
+        )
+        count = session.execute(count_statement).scalars().one()
+        statement = (
+            select(Task)
+            .where(Task.owner_id == owner.id)
+            .offset(skip)
+            .limit(limit)
+        )
+        items = session.execute(statement).scalars().all()
+    else:
+        count_statement = (
+            select(func.count())
+            .select_from(Task)
+        )
+        count = session.execute(count_statement).scalars().one()
+        statement = (
+            select(Task)
+            .offset(skip)
+            .limit(limit)
+        )
+        items = session.execute(statement).scalars().all()
+    
+
+    return TasksPublic(data=items, count=count)
+
+    
+
+@router.post("/", tags=["tasks"], response_model=TaskPublic)
 async def create_task(
     task_in: TaskCreate,
     session: SessionDep,
     current_user: CurrentUser,
-) -> TaskResponse:
-    owner = session.get(User, task_in.owner_id)
-    if not owner:
-        raise HTTPException(status_code=404, detail="User not found")
+) -> TaskPublic:
+    if task_in.owner_id:
+        owner = session.get(User, task_in.owner_id)
+        if not owner:
+            raise HTTPException(status_code=404, detail="User not found")
     task = Task(
         title=task_in.title,
         description=task_in.description,
         is_completed=task_in.is_completed,
-        owner_id=owner.id
+        owner_id=task_in.owner_id
     )
     session.add(task)
     session.commit()
