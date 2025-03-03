@@ -13,8 +13,12 @@ async def create_task(
     session: SessionDep,
     current_user: CurrentUser,
 ) -> TaskResponse:
-    task_dict = task_in.model_dump()
-    task = Task(owner_id=current_user.id, **task_dict)
+    task = Task(
+        title=task_in.title,
+        description=task_in.description,
+        is_completed=task_in.is_completed,
+        owner_id=current_user.id,
+    )
     session.add(task)
     session.commit()
     session.refresh(task)

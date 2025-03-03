@@ -13,7 +13,7 @@ from jwt.exceptions import InvalidTokenError
 from pydantic import ValidationError
 
 reusable_oauth2 = OAuth2PasswordBearer(
-    tokenUrl=f"/users/login"
+    tokenUrl=f"/api/v1/users/login"
 )
 
 TokenDep = Annotated[str, Depends(reusable_oauth2)]
