@@ -31,3 +31,7 @@ class TaskPublic(TaskBase):
 class TasksPublic(BaseModel):
     data: list[TaskPublic]
     count: int
+
+
+class Message(BaseModel):
+    message: str

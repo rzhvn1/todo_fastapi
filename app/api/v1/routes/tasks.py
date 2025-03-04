@@ -1,6 +1,6 @@
 from typing import Any
 from fastapi import APIRouter, HTTPException, status
-from schemas.task import TaskPublic, TaskCreateUpdate, TasksPublic
+from schemas.task import TaskPublic, TaskCreateUpdate, TasksPublic, Message
 from dependencies.db import SessionDep
 from dependencies.user import CurrentUser
 from models.task import Task
@@ -104,3 +104,16 @@ async def update_task(
     session.refresh(task)
 
     return task
+
+@router.delete("/{id}", tags=["tasks"])
+async def delete_task(
+    session: SessionDep,
+    current_user: CurrentUser,
+    id: int
+) -> Message:
+    task = session.get(Task, id)
+    if not task:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
+    session.delete(task)
+    session.commit()
+    return Message(message="Task deleted successfully")
