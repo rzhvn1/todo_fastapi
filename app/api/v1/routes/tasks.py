@@ -1,6 +1,6 @@
 from typing import Any
 from fastapi import APIRouter, HTTPException, status
-from schemas.task import TaskPublic, TaskCreate, TasksPublic
+from schemas.task import TaskPublic, TaskCreateUpdate, TasksPublic
 from dependencies.db import SessionDep
 from dependencies.user import CurrentUser
 from models.task import Task
@@ -64,7 +64,7 @@ async def get_task(
 
 @router.post("/", tags=["tasks"], response_model=TaskPublic)
 async def create_task(
-    task_in: TaskCreate,
+    task_in: TaskCreateUpdate,
     session: SessionDep,
     current_user: CurrentUser,
 ) -> TaskPublic:
@@ -84,3 +84,23 @@ async def create_task(
 
     return task
 
+
+@router.put("/{id}", tags=["tasks"], response_model=TaskPublic)
+async def update_task(
+    task_in: TaskCreateUpdate,
+    session: SessionDep,
+    current_user: CurrentUser,
+    id: int
+) -> Any:
+    task = session.get(Task, id)
+    if not task:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
+    update_dict = task_in.model_dump(exclude_unset=True)
+    for key, value in update_dict.items():
+        setattr(task, key, value)
+
+    session.add(task)
+    session.commit()
+    session.refresh(task)
+
+    return task

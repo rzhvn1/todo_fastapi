@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 from datetime import datetime
 
 
-class TaskCreate(BaseModel):
+class TaskCreateUpdate(BaseModel):
     title: str
     description: str | None
     is_completed: bool = False
